@@ -179,7 +179,7 @@
       <h3>訂單摘要</h3>
       ${showItems ? Cart.items().map(i => { const p = byId(i.id); return `<div class="sum-item"><span>${p.name} × ${i.qty}</span><span>${fmt(p.price * i.qty)}</span></div>`; }).join('') + '<hr>' : ''}
       <div class="sum-row"><span>小計</span><span>${fmt(sub)}</span></div>
-      <div class="sum-row"><span>運費</span><span>${ship ? fmt(ship) : '免費'}</span></div>
+      <div class="sum-row"><span>運費（標準送貨）</span><span>${ship ? fmt(ship) : '免費'}</span></div>
       ${sub > 0 && sub < FREE_SHIP ? `<p class="hint">再買 ${fmt(FREE_SHIP - sub)} 即享免運費</p>` : ''}
       <hr>
       <div class="sum-row total"><span>總計</span><span>${fmt(sub + ship)}</span></div>
@@ -227,25 +227,7 @@
     <div class="cart-layout">
       <form id="checkoutForm" class="form" novalidate>
         <fieldset>
-          <legend>1. 聯絡資料</legend>
-          <div class="row2">
-            <label>姓名 *<input class="input" name="name" required autocomplete="name" placeholder="陳大文"><small class="err"></small></label>
-            <label>電話 *<input class="input" name="phone" required inputmode="tel" autocomplete="tel" placeholder="9123 4567"><small class="err"></small></label>
-          </div>
-          <label>電郵（選填）<input class="input" name="email" type="email" autocomplete="email" placeholder="you@example.com"><small class="err"></small></label>
-        </fieldset>
-        <fieldset>
-          <legend>2. 送貨地址</legend>
-          <div class="row2">
-            <label>地區 *<select class="input" name="region" required>
-              <option value="">請選擇</option><option>香港島</option><option>九龍</option><option>新界</option><option>離島</option>
-            </select><small class="err"></small></label>
-            <label>送貨方式<select class="input" name="delivery"><option>標準送貨（2-3 個工作天）</option><option>順豐站自取</option></select></label>
-          </div>
-          <label>詳細地址 *<textarea class="input" name="address" rows="3" required placeholder="大廈、樓層、單位、街道"></textarea><small class="err"></small></label>
-        </fieldset>
-        <fieldset>
-          <legend>3. 付款方式</legend>
+          <legend>付款方式</legend>
           <!-- 付款方式：次序由 js/experiment.js 隨機分配，無預設選項 -->
           <div class="pay-list" role="radiogroup" aria-label="付款方式">${Experiment.paymentOptionsHTML()}</div>
           <small class="err" id="payErr"></small>
@@ -265,9 +247,6 @@
       <h1>多謝惠顧，訂單已確認！</h1>
       <p class="muted">訂單編號 <b>${o.no}</b> · 我們會盡快安排送貨。</p>
       <div class="order-box">
-        <div class="sum-row"><span>收件人</span><span>${esc(o.name)}（${esc(o.phone)}）</span></div>
-        <div class="sum-row"><span>地址</span><span>${esc(o.region)} ${esc(o.address)}</span></div>
-        <div class="sum-row"><span>送貨方式</span><span>${esc(o.delivery)}</span></div>
         <div class="sum-row"><span>付款方式</span><span>${esc(Experiment.methodName(o.payment))}</span></div>
         <hr>
         ${o.items.map(i => `<div class="sum-item"><span>${esc(i.name)} × ${i.qty}</span><span>${fmt(i.total)}</span></div>`).join('')}
@@ -357,44 +336,26 @@
           document.getElementById('payErr').textContent = '';
           f.querySelector('.pay-list').classList.remove('invalid');
         }));
-        // clear a field's error as soon as the user edits it
-        f.addEventListener('input', e => {
-          const el = e.target, err = el.parentElement && el.parentElement.querySelector('.err');
-          if (err && el.classList.contains('invalid')) { err.textContent = ''; el.classList.remove('invalid'); }
-        });
       }
     }
   }
 
   function submitOrder(e) {
     e.preventDefault();
-    const f = e.target, d = Object.fromEntries(new FormData(f));
-    const errs = {};
-    if (!d.name.trim()) errs.name = '請輸入姓名';
-    if (!/^[2-9]\d{7}$/.test(d.phone.replace(/[\s-]/g, ''))) errs.phone = '請輸入 8 位數字香港電話號碼';
-    if (d.email && !/^\S+@\S+\.\S+$/.test(d.email)) errs.email = '電郵格式不正確';
-    if (!d.region) errs.region = '請選擇地區';
-    if (d.address.trim().length < 5) errs.address = '請輸入詳細地址';
-    if (!d.payment) errs.payment = '請選擇付款方式';
-    f.querySelectorAll('[name]').forEach(el => {
-      const err = el.parentElement.querySelector('.err');
-      if (!err) return;
-      err.textContent = errs[el.name] || '';
-      el.classList.toggle('invalid', !!errs[el.name]);
-    });
-    document.getElementById('payErr').textContent = errs.payment || '';
-    f.querySelector('.pay-list').classList.toggle('invalid', !!errs.payment);
-    if (Object.keys(errs).length) {
-      const first = f.querySelector('.input.invalid') || f.querySelector('input[name=payment]');
-      first.focus();
+    const f = e.target;
+    const payment = (f.querySelector('input[name=payment]:checked') || {}).value;
+    // 唯一驗證：必須選擇付款方式
+    if (!payment) {
+      document.getElementById('payErr').textContent = '請選擇付款方式';
+      f.querySelector('.pay-list').classList.add('invalid');
+      f.querySelector('input[name=payment]').focus();
       return;
     }
-    Experiment.logEvent(d.payment); // 記錄實驗事件
+    Experiment.logEvent(payment); // 記錄實驗事件
     const sub = Cart.subtotal(), ship = sub >= FREE_SHIP ? 0 : SHIP_FEE;
     const order = {
       no: 'TH' + Date.now().toString().slice(-8),
-      name: d.name.trim(), phone: d.phone.trim(), region: d.region, address: d.address.trim(),
-      delivery: d.delivery, payment: d.payment,
+      payment,
       items: Cart.items().map(i => { const p = byId(i.id); return { name: p.name, qty: i.qty, total: p.price * i.qty }; }),
       ship, total: sub + ship
     };
