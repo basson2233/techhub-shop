@@ -4,16 +4,19 @@
  * 研究問題：付款選項的「排列次序」會否影響用戶選擇哪一種付款方式？
  *
  * 設計 (design)
- *  - 6 個付款方式，結帳頁以「垂直、同等大小、無預設選項」的方式列出。
+ *  - 版本 v2：3 個付款選項（Alipay / WeChat Pay、信用卡、八達通），結帳頁以「垂直、同等大小、
+ *    無預設選項」的方式列出。每行只代表一個選擇（一按即選，行內沒有子選項）。
+ *  - v1（6 個付款方式）的分配及事件已停用：載入時會刪除舊的 v1 localStorage 資料，
+ *    所有訪客會重新獲得 3 個選項的隨機次序，舊數據不會混入新統計。
  *  - 每位訪客首次到訪時，以 Fisher–Yates 洗牌產生一個均勻隨機排列 (uniform random permutation)，
  *    連同參與者 ID (participant ID) 存入 localStorage → 同一瀏覽器每次看到相同次序。
  *  - 測試用 URL 參數（可放在 ?query 或 hash 之後，例如 #/checkout?order=...）：
- *      ?order=octopus,alipay,wechat,card,fps,payme   指定次序（必須剛好包含 6 個 ID 各一次）
+ *      ?order=octopus,ewallet,card   指定次序（必須剛好包含 3 個 ID 各一次）
  *      ?variant=reset                                 重新隨機分配（同時產生新的參與者 ID）
  *    使用參數後會自動從網址移除，避免重新整理時重複觸發。
  *    以 ?order= 指定的分配會標記為 assignment = "override"，結果頁可選擇排除。
  *  - 落單時記錄一個事件 (event) 到 localStorage：
- *      參與者 ID、時間、顯示次序、所選方式、所選方式的位置 (1–6)、
+ *      參與者 ID、時間、顯示次序、所選方式、所選方式的位置 (1–3)、
  *      提交前更改選擇的次數、由進入結帳頁至提交的時間 (ms)、裝置寬度類別。
  *  - 結果頁：#/experiment（不在導覽列中）。
  *
@@ -22,21 +25,29 @@
  *    （例如免費的 Google Form / Sheets、Supabase 或 Firebase）。
  */
 (function () {
-  const ASSIGN_KEY = 'techhub_exp_assignment_v1';
-  const EVENTS_KEY = 'techhub_exp_events_v1';
-  const EXPERIMENT_ID = 'payment-order-v1';
+  const ASSIGN_KEY = 'techhub_exp_assignment_v2';
+  const EVENTS_KEY = 'techhub_exp_events_v2';
+  const EXPERIMENT_ID = 'payment-order-v2';
+  // 舊版本的 localStorage key（v1 = 6 個付款方式），載入時刪除
+  const LEGACY_KEYS = ['techhub_exp_assignment_v1', 'techhub_exp_events_v1'];
+  LEGACY_KEYS.forEach(k => { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } });
 
-  /* 6 個付款方式。icon 一律使用相同樣式的中性灰色字母徽章，避免任何選項在視覺上較突出。 */
+  /* 3 個付款選項。每行左邊是同樣式的中性灰色徽章；tags 是行內的細小中性文字標籤（不使用商標圖片）。
+     tags 只作說明，不是子選項 —— 整行就是一個選擇。 */
   const METHODS = [
-    { id: 'octopus', name: '八達通 Octopus',      badge: '八' },
-    { id: 'alipay',  name: 'Alipay 支付寶',        badge: '支' },
-    { id: 'wechat',  name: 'WeChat Pay 微信支付',  badge: '微' },
-    { id: 'card',    name: '信用卡',               badge: '卡' },
-    { id: 'fps',     name: '轉數快 FPS',           badge: '轉' },
-    { id: 'payme',   name: 'PayMe',                badge: 'P' }
+    { id: 'ewallet', name: 'Alipay / WeChat Pay', badge: '錢', tags: ['Alipay 支付寶', 'WeChat Pay 微信支付'] },
+    { id: 'card',    name: '信用卡',              badge: '卡', tags: ['VISA', 'Mastercard'] },
+    { id: 'octopus', name: '八達通 Octopus',      badge: '八', tags: [] }
   ];
   const IDS = METHODS.map(m => m.id);
   const byId = id => METHODS.find(m => m.id === id);
+  const K = IDS.length; // 選項數目 (3)
+  /* 所有可能的排列（3 個選項 → 6 種次序），用於結果頁 */
+  function permutations(arr) {
+    if (arr.length <= 1) return [arr.slice()];
+    return arr.flatMap((x, i) => permutations(arr.filter((_, j) => j !== i)).map(p => [x].concat(p)));
+  }
+  const ALL_ORDERS = permutations(IDS);
 
   /* ---------- helpers ---------- */
   function uuid() {
@@ -99,7 +110,7 @@
         const a = { experiment: EXPERIMENT_ID, pid: (cur && cur.pid) || uuid(), order, source: 'override', assignedAt: new Date().toISOString() };
         localStorage.setItem(ASSIGN_KEY, JSON.stringify(a));
       } else {
-        console.warn('[experiment] 無效的 order 參數，已忽略。需要剛好包含以下 6 個 ID：' + IDS.join(','));
+        console.warn('[experiment] 無效的 order 參數，已忽略。需要剛好包含以下 ' + K + ' 個 ID：' + IDS.join(','));
       }
     } else if (variant === 'reset') {
       newAssignment(shuffle(IDS), 'random');
@@ -127,7 +138,7 @@
       ts: new Date().toISOString(),
       order: a.order.slice(),
       choice,
-      position: a.order.indexOf(choice) + 1,           // 1–6
+      position: a.order.indexOf(choice) + 1,           // 1–3
       changes: session ? Math.max(0, session.selections - 1) : 0, // 首次選擇之後再更改的次數
       msToSubmit: session ? Math.round(performance.now() - session.start) : null,
       device: deviceCategory(w),
@@ -149,7 +160,7 @@
       return `<label class="pay-row">
         <input type="radio" name="payment" value="${m.id}" data-position="${i + 1}">
         <span class="pay-badge" aria-hidden="true">${m.badge}</span>
-        <span class="pay-name">${m.name}</span>
+        <span class="pay-text"><span class="pay-name">${m.name}</span>${m.tags.length ? `<span class="pay-tags">${m.tags.map(t => `<span class="pay-tag">${t}</span>`).join('')}</span>` : ''}</span>
         <span class="pay-radio" aria-hidden="true"></span>
       </label>`;
     }).join('');
@@ -157,23 +168,30 @@
 
   /* ---------- statistics ---------- */
   function stats(events) {
+    events = events.filter(e => e.experiment === EXPERIMENT_ID && isValidOrder(e.order)); // 只計算本版本事件
     const n = events.length;
     const choiceCounts = Object.fromEntries(IDS.map(id => [id, 0]));
-    const posChosen = Array(6).fill(0);
+    const posChosen = Array(K).fill(0);
     // matrix[p][id] = { shown, chosen }
-    const matrix = Array.from({ length: 6 }, () => Object.fromEntries(IDS.map(id => [id, { shown: 0, chosen: 0 }])));
+    const matrix = Array.from({ length: K }, () => Object.fromEntries(IDS.map(id => [id, { shown: 0, chosen: 0 }])));
     events.forEach(e => {
       if (choiceCounts[e.choice] != null) choiceCounts[e.choice]++;
-      if (e.position >= 1 && e.position <= 6) posChosen[e.position - 1]++;
+      if (e.position >= 1 && e.position <= K) posChosen[e.position - 1]++;
       (e.order || []).forEach((id, p) => {
         if (!matrix[p] || !matrix[p][id]) return;
         matrix[p][id].shown++;
         if (id === e.choice) matrix[p][id].chosen++;
       });
     });
+    // 每種次序：提交次數，以及選了第 1/2/3 位的次數
+    const byOrder = ALL_ORDERS.map(o => {
+      const key = o.join(',');
+      const evs = events.filter(e => e.order.join(',') === key);
+      return { order: o, n: evs.length, pos: Array.from({ length: K }, (_, i) => evs.filter(e => e.position === i + 1).length) };
+    });
     const avg = arr => arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : 0;
     return {
-      n, choiceCounts, posChosen, matrix,
+      n, choiceCounts, posChosen, matrix, byOrder,
       participants: new Set(events.map(e => e.pid)).size,
       avgChanges: avg(events.map(e => e.changes || 0)),
       avgSeconds: avg(events.filter(e => e.msToSubmit != null).map(e => e.msToSubmit / 1000))
@@ -182,7 +200,7 @@
 
   function toCSV(events) {
     const cols = ['experiment', 'pid', 'ts', 'assignment', 'order', 'choice', 'position', 'changes', 'msToSubmit', 'device', 'viewportWidth',
-      'pos1', 'pos2', 'pos3', 'pos4', 'pos5', 'pos6'];
+      ...IDS.map((_, i) => 'pos' + (i + 1))];
     const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     const rows = events.map(e => cols.map(c => {
       if (c === 'order') return q((e.order || []).join('|'));
@@ -204,7 +222,7 @@
   /* ---------- results page (#/experiment) ---------- */
   const pct = (a, b) => b ? (a / b * 100).toFixed(1) + '%' : '—';
   function resultsHTML(excludeOverride) {
-    const all = readJSON(EVENTS_KEY, []);
+    const all = readJSON(EVENTS_KEY, []).filter(e => e.experiment === EXPERIMENT_ID);
     const events = excludeOverride ? all.filter(e => e.assignment !== 'override') : all;
     const s = stats(events);
     const a = getAssignment();
@@ -243,7 +261,7 @@
         <table class="tbl"><thead><tr><th>位置</th><th>被選次數</th><th>選擇率</th><th></th></tr></thead><tbody>
           ${s.posChosen.map((c, i) => `<tr><td>第 ${i + 1} 位</td><td>${c}</td><td>${pct(c, s.n)}</td><td>${bar(c, maxPos)}</td></tr>`).join('')}
         </tbody></table>
-        <p class="muted small">若次序沒有影響，每個位置的選擇率應接近 16.7%（1/6）。</p>
+        <p class="muted small">若次序沒有影響，每個位置的選擇率應接近 ${(100 / K).toFixed(1)}%（1/${K}）。</p>
       </section>
     </div>
 
@@ -257,6 +275,14 @@
           return `<td style="--r:${r.toFixed(3)}"><b>${c.chosen}</b> / ${c.shown}<small>${pct(c.chosen, c.shown)}</small></td>`;
         }).join('')}</tr>`).join('')}
       </tbody></table></div>
+    </section>
+
+    <section class="panel">
+      <h3>按次序（${ALL_ORDERS.length} 種排列）統計</h3>
+      <div class="tbl-wrap"><table class="tbl orders"><thead><tr><th>#</th><th>次序（第 1 → 第 ${K} 位）</th><th>提交次數</th>${IDS.map((_, i) => `<th>選第 ${i + 1} 位</th>`).join('')}</tr></thead><tbody>
+        ${s.byOrder.map((r, i) => `<tr><td>${i + 1}</td><td>${r.order.map(id => byId(id).name).join(' → ')}</td><td>${r.n}</td>${r.pos.map(c => `<td>${c}${r.n ? ` <small class="muted">(${pct(c, r.n)})</small>` : ''}</td>`).join('')}</tr>`).join('')}
+      </tbody></table></div>
+      <p class="muted small">隨機分配下，每種次序的出現機會均等（各約 ${(100 / ALL_ORDERS.length).toFixed(1)}%）。</p>
     </section>
 
     <section class="panel">
@@ -278,7 +304,7 @@
   let excludeOverride = false;
   function bindResults(rerender) {
     const ex = document.getElementById('expExport');
-    if (ex) ex.addEventListener('click', () => exportCSV(readJSON(EVENTS_KEY, [])));
+    if (ex) ex.addEventListener('click', () => exportCSV(readJSON(EVENTS_KEY, []).filter(e => e.experiment === EXPERIMENT_ID)));
     const cl = document.getElementById('expClear');
     if (cl) cl.addEventListener('click', () => {
       if (confirm('確定清除此瀏覽器所有實驗資料？此操作無法還原。')) { localStorage.removeItem(EVENTS_KEY); rerender(); }
@@ -293,7 +319,7 @@
   getAssignment(); // 首次到訪即分配
 
   window.Experiment = {
-    METHODS, IDS, methodName: id => (byId(id) || {}).name || id,
+    METHODS, IDS, ALL_ORDERS, EXPERIMENT_ID, methodName: id => (byId(id) || {}).name || id,
     getAssignment, paymentOptionsHTML, startCheckout, trackSelection, logEvent,
     events: () => readJSON(EVENTS_KEY, []),
     stats, toCSV, exportCSV,
