@@ -294,3 +294,9 @@ legend { font-weight: 700; font-size: 1.1rem; float: left; width: 100%; margin-b
 .exp-order { margin: 8px 0 10px 20px; padding: 0; }
 code { background: #f1f5f9; padding: 1px 6px; border-radius: 6px; font-size: .85em; }
 @media (max-width: 820px) { .exp-grid { grid-template-columns: 1fr; } .exp-stats { grid-template-columns: 1fr 1fr; } }
+
+/* real-product additions */
+.brand { font-size: .78rem; font-weight: 700; color: #475569; letter-spacing: .02em; }
+.price-note { display: flex; gap: 6px; align-items: flex-start; font-size: .8rem; color: var(--muted); background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin: -4px 0 14px; }
+.price-note .ic { width: 16px; height: 16px; margin-top: 2px; color: var(--primary); }
+.price-note a { color: var(--primary); text-decoration: underline; }

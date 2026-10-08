@@ -1,9 +1,16 @@
 /*
- * ⚠️ 示例資料 (EXAMPLE / SAMPLE DATA ONLY)
- * 以下所有產品名稱、價格、規格及描述均為虛構示範資料，
- * 並非真實產品，亦不代表任何品牌。正式上線前請替換為真實商品資料（或改為從後端 API 載入）。
- * All product names, prices and descriptions below are made-up demo data.
+ * 產品資料 — 真實在售型號 (REAL, currently-sold models) · 參考價格 (REFERENCE PRICES)
+ * ------------------------------------------------------------------
+ * - 以下為真實品牌及型號；價格為香港參考價（港幣），於 2026-10-08 經網上搜尋核對
+ *   官方香港網店／新聞稿或香港主要零售商（豐澤 Fortress、百老滙 Broadway、衛訊 Wilson 等）。
+ * - price = 參考售價；oldPrice = 同一來源列出的建議零售價（只在來源有折扣時填寫）。
+ * - 規格只收錄已從來源核實的項目；未能確認的細節一律省略。
+ * - 價格及供應會隨時變動，只供參考。本站為示範／研究網站，並非任何品牌的官方或授權商店，
+ *   亦與相關品牌無任何關係；產品名稱及商標屬各自擁有人所有。
+ * - 產品圖片為本站自繪的離線 SVG 示意圖（js/art.js），並非官方產品相片。
  */
+window.PRICE_CHECKED = '2026-10-08';
+
 window.CATEGORIES = [
   { id: 'phone',     name: '手機',     icon: 'phone' },
   { id: 'laptop',    name: '手提電腦', icon: 'laptop' },
@@ -14,52 +21,79 @@ window.CATEGORIES = [
 ];
 
 window.PRODUCTS = [
-  { id: 'p1',  category: 'phone', name: 'Nova X1 智能手機', price: 5999, oldPrice: 6499, color: '#4f46e5', rating: 4.8, featured: true,
-    desc: '6.7 吋 OLED 120Hz 螢幕，三鏡頭 50MP 主攝，全日續航。',
-    specs: ['6.7 吋 OLED 120Hz', '256GB 儲存', '50MP 三鏡頭', '5000mAh 電池'] },
-  { id: 'p2',  category: 'phone', name: 'Nova Lite 5G', price: 2799, color: '#0ea5e9', rating: 4.5,
-    desc: '輕巧 5G 入門手機，性價比之選，雙卡雙待。',
-    specs: ['6.4 吋 LCD', '128GB 儲存', '48MP 雙鏡頭', '4500mAh 電池'] },
-  { id: 'p3',  category: 'phone', name: 'Fold Prism 摺機', price: 11999, color: '#db2777', rating: 4.7, featured: true,
-    desc: '可摺疊大屏，一機兼顧手機與平板體驗。',
-    specs: ['7.6 吋摺疊屏', '512GB 儲存', '12GB RAM', '無線充電'] },
-  { id: 'p4',  category: 'laptop', name: 'AeroBook 14 輕薄筆電', price: 7899, oldPrice: 8599, color: '#64748b', rating: 4.6, featured: true,
-    desc: '1.2kg 鋁合金機身，14 吋 2.8K 螢幕，續航長達 18 小時。',
-    specs: ['14 吋 2.8K', '16GB RAM', '512GB SSD', '18 小時續航'] },
-  { id: 'p5',  category: 'laptop', name: 'Titan G16 電競筆電', price: 13499, color: '#dc2626', rating: 4.9,
-    desc: '高效能獨立顯示卡，240Hz 螢幕，RGB 背光鍵盤。',
-    specs: ['16 吋 240Hz', '32GB RAM', '1TB SSD', '獨立顯示卡'] },
-  { id: 'p6',  category: 'laptop', name: 'StudyMate 13', price: 3999, color: '#16a34a', rating: 4.3,
-    desc: '學生首選，輕巧耐用，滿足上課及文書需要。',
-    specs: ['13.3 吋 FHD', '8GB RAM', '256GB SSD', '10 小時續航'] },
-  { id: 'p7',  category: 'tablet', name: 'Slate Pro 11', price: 5299, color: '#7c3aed', rating: 4.7, featured: true,
-    desc: '11 吋高刷新率平板，支援手寫筆與鍵盤套。',
-    specs: ['11 吋 120Hz', '256GB 儲存', '支援手寫筆', 'Wi-Fi 6'] },
-  { id: 'p8',  category: 'tablet', name: 'Slate Mini 8', price: 2199, color: '#f59e0b', rating: 4.4,
-    desc: '單手可握的 8 吋平板，閱讀追劇好拍檔。',
-    specs: ['8.3 吋 LCD', '64GB 儲存', '立體聲喇叭', '7000mAh 電池'] },
-  { id: 'p9',  category: 'headphone', name: 'SoundWave 降噪耳機', price: 1899, oldPrice: 2299, color: '#111827', rating: 4.8, featured: true,
-    desc: '主動降噪頭戴式耳機，30 小時續航，舒適耳罩。',
-    specs: ['主動降噪', '30 小時續航', '藍牙 5.3', '快速充電'] },
-  { id: 'p10', category: 'headphone', name: 'AirBuds 真無線耳機', price: 899, color: '#e11d48', rating: 4.5, featured: true,
-    desc: '輕巧入耳式設計，IPX5 防水，運動通勤皆宜。',
-    specs: ['真無線', 'IPX5 防水', '24 小時連充電盒', '觸控操作'] },
-  { id: 'p11', category: 'watch', name: 'Pulse Watch S', price: 2499, color: '#0d9488', rating: 4.6, featured: true,
-    desc: '心率、血氧、睡眠監測，內置 GPS，防水 50 米。',
-    specs: ['1.9 吋 AMOLED', '內置 GPS', '50 米防水', '7 日續航'] },
-  { id: 'p12', category: 'watch', name: 'Pulse Band 運動手環', price: 499, color: '#ea580c', rating: 4.2,
-    desc: '輕量運動手環，記錄步數及卡路里，14 日超長續航。',
-    specs: ['1.1 吋彩屏', '14 日續航', '睡眠監測', '50 米防水'] },
-  { id: 'p13', category: 'accessory', name: 'PowerCube 65W 充電器', price: 299, color: '#2563eb', rating: 4.7, featured: true,
-    desc: '氮化鎵快充，三口輸出，可同時為手機及筆電充電。',
-    specs: ['65W 輸出', '2C + 1A', '氮化鎵技術', '可摺疊插腳'] },
-  { id: 'p14', category: 'accessory', name: 'MagCharge 流動電源 10000mAh', price: 359, color: '#9333ea', rating: 4.4,
-    desc: '磁吸式無線充電流動電源，輕薄便攜。',
-    specs: ['10000mAh', '磁吸無線充電', '20W 有線快充', 'LED 電量顯示'] },
-  { id: 'p15', category: 'accessory', name: 'KeyFlow 無線鍵盤', price: 649, color: '#475569', rating: 4.5,
-    desc: '低噪音剪刀腳鍵盤，可連接三部裝置快速切換。',
-    specs: ['藍牙 / 2.4G', '三裝置切換', '充電式', '中英鍵位'] },
-  { id: 'p16', category: 'accessory', name: 'GlideMouse 人體工學滑鼠', price: 399, color: '#0891b2', rating: 4.3,
-    desc: '符合人體工學設計，長時間使用亦不易疲勞。',
-    specs: ['4000 DPI', '靜音按鍵', '藍牙連接', '70 日續航'] }
+  /* ---------- 手機 ---------- */
+  { id: 'iphone-18-pro', category: 'phone', brand: 'Apple', name: 'iPhone 18 Pro（256GB）', price: 10499, color: '#7f1d1d', featured: true,
+    desc: 'A20 Pro 晶片，4800 萬像素 Fusion 主鏡頭首度支援可變光圈，2026 年 9 月 18 日香港發售。',
+    specs: ['6.3 吋 Super Retina XDR', 'A20 Pro 晶片', '4800 萬像素可變光圈主鏡頭', '影片播放最長 36 小時', 'Wi‑Fi 7（N1 晶片）', '256GB 起'],
+    source: { name: 'Apple 香港新聞稿／網上商店', url: 'https://www.apple.com/hk/en/newsroom/2026/09/apple-debuts-iphone-18-pro-and-iphone-18-pro-max/' } },
+  { id: 'iphone-17', category: 'phone', brand: 'Apple', name: 'iPhone 17（256GB）', price: 7799, color: '#6d8fb3',
+    desc: '6.3 吋 ProMotion 顯示屏配 A19 晶片，基本容量 256GB。',
+    specs: ['6.3 吋 Super Retina XDR', 'ProMotion 技術', 'A19 晶片', '1800 萬像素 Center Stage 前置鏡頭', '256GB 起'],
+    source: { name: 'Apple 香港網上商店', url: 'https://www.apple.com/hk/shop/buy-iphone/iphone-17' } },
+  { id: 'galaxy-s26-ultra', category: 'phone', brand: 'Samsung', name: 'Galaxy S26 Ultra（12GB+256GB）', price: 9698, oldPrice: 10198, color: '#334155', featured: true,
+    desc: 'Galaxy AI 旗艦，內置 Privacy Display 防窺顯示，機身厚 7.9mm、重 214g。',
+    specs: ['6.9 吋 3120×1440 Dynamic AMOLED 2X', 'Snapdragon 8 Elite Gen 5 for Galaxy', '2 億像素主鏡頭', '5000mAh 電池', '12GB + 256GB'],
+    source: { name: '衛訊 Wilson（建議零售價 HK$10,198）', url: 'https://www.wilsoncomm.com.hk/samsung-galaxy-s26-ultra-s9480?language=en' } },
+
+  /* ---------- 手提電腦 ---------- */
+  { id: 'macbook-air-13-m5', category: 'laptop', brand: 'Apple', name: 'MacBook Air 13 吋（M5）', price: 8999, color: '#8fb8d8', featured: true,
+    desc: '無風扇輕薄設計，M5 晶片，基本容量提升至 512GB，支援 Wi‑Fi 7。',
+    specs: ['13.6 吋 Liquid Retina', 'M5 晶片（10 核心 CPU）', '16GB 統一記憶體', '512GB SSD', '電池最長 18 小時', '2 個 Thunderbolt 4'],
+    source: { name: 'Apple 香港新聞稿／網上商店', url: 'https://www.apple.com/hk/en/newsroom/2026/03/apple-introduces-the-new-macbook-air-with-m5/' } },
+  { id: 'zenbook-14-um3406', category: 'laptop', brand: 'ASUS', name: 'ASUS Zenbook 14 OLED（UM3406GA）', price: 10998, oldPrice: 13998, color: '#1e293b', featured: true,
+    desc: 'Copilot+ PC，NPU 高達 50 TOPS；全金屬機身通過 MIL-STD-810H 測試。',
+    specs: ['14 吋 FHD 16:10 OLED', 'AMD Ryzen AI 7 445', '16GB LPDDR5X', '1TB SSD', '1.2kg・75Wh 電池'],
+    source: { name: '百老滙 Broadway', url: 'https://www.broadwaylifestyle.com/products/asus-zenbook-14-um3406ga-jb7057w' } },
+  { id: 'yoga-slim-7-ultra-14', category: 'laptop', brand: 'Lenovo', name: 'Lenovo Yoga Slim 7 Ultra 14（14IPH11）', price: 16999, color: '#475569',
+    desc: '2026 年款 14 吋輕薄筆電，配備高解像度 120Hz OLED 螢幕。',
+    specs: ['14 吋 2880×1800 OLED 120Hz', 'Intel Core Ultra 7 355', '32GB RAM', '1TB SSD', 'Windows 11 Home'],
+    source: { name: 'Cyber-Pro（香港行貨）', url: 'https://www.cyber-pro.com.hk/products/lenovo-83qk002yhh-yoga-slim-7-ultra-14iph11-14-intel-ultra-7-355-32gb1tb-ssd' } },
+
+  /* ---------- 平板 ---------- */
+  { id: 'ipad-air-13-m4', category: 'tablet', brand: 'Apple', name: 'iPad Air 13 吋（M4）Wi‑Fi', price: 6099, oldPrice: 6299, color: '#7c6fb0', featured: true,
+    desc: 'M4 晶片驅動，支援 Apple Pencil Pro 及 Magic Keyboard。',
+    specs: ['13 吋顯示屏', 'M4 晶片（8 核心 CPU、9 核心 GPU）', '12GB RAM', '128GB 起', 'Wi‑Fi 版'],
+    source: { name: '豐澤 Fortress 網上價（建議零售價 HK$6,299）', url: 'https://www.fortress.com.hk/en/product/ipad-air-13%E2%80%9D-m4-2026/p/BP_14077834?variant=14077834' } },
+  { id: 'galaxy-tab-s12-plus', category: 'tablet', brand: 'Samsung', name: 'Galaxy Tab S12+ Wi‑Fi（12GB+256GB）', price: 9488, color: '#64748b',
+    desc: '2026 年 10 月 7 日香港發售，機身厚 5.3mm，隨機附 S Pen。',
+    specs: ['12.6 吋 2800×1752 Dynamic AMOLED 2X 120Hz', '天璣 9500 處理器', '12GB + 256GB', '10,600mAh 電池', 'IP68 防塵防水'],
+    source: { name: 'Samsung 香港新聞稿（建議零售價）', url: 'https://www.samsung.com/hk/news/product/samsung-introduces-galaxy-tab-s12-series-the-ultimate-productivity-powerhouse-built-for-growth/' } },
+
+  /* ---------- 耳機 ---------- */
+  { id: 'airpods-pro-3', category: 'headphone', brand: 'Apple', name: 'AirPods Pro 3', price: 1849, color: '#9ca3af', featured: true,
+    desc: '主動降噪效果較上代提升最多 2 倍，並新增運動時心率感應。',
+    specs: ['主動降噪', '運動時心率感應', '開啟降噪聆聽最長 8 小時', 'IP57 抗汗抗水', '5 種尺寸耳塞'],
+    source: { name: 'Apple 香港新聞稿／網上商店', url: 'https://www.apple.com/hk/en/newsroom/2025/09/introducing-airpods-pro-3-the-ultimate-audio-experience/' } },
+  { id: 'sony-wh-1000xm6', category: 'headphone', brand: 'Sony', name: 'Sony WH-1000XM6 無線降噪耳機', price: 2799, oldPrice: 3699, color: '#1f2937', featured: true,
+    desc: 'Sony 頭戴式旗艦降噪耳機，採用 QN3 處理器。',
+    specs: ['頭戴式無線降噪', 'QN3 處理器', '最長 30 小時續航'],
+    source: { name: '豐澤 Fortress（建議零售價 HK$3,699）', url: 'https://www.fortress.com.hk/en/product/wh-1000xm6-headphone/p/BP_13918697?variant=13918697' } },
+
+  /* ---------- 智能手錶 ---------- */
+  { id: 'apple-watch-s12', category: 'watch', brand: 'Apple', name: 'Apple Watch Series 12（42mm GPS）', price: 3199, color: '#57534e', featured: true,
+    desc: '全新健康感測系統，每 5 秒讀取一次心率；2026 年 9 月 18 日發售。',
+    specs: ['S11 晶片', '每 5 秒讀取心率', '鋁金屬錶殼配陶瓷盾', '42mm / 46mm 尺寸'],
+    source: { name: 'Apple 香港網上商店（經 KONGGOK 報道核對）', url: 'https://www.apple.com/hk/shop/buy-watch/apple-watch' } },
+  { id: 'galaxy-watch9', category: 'watch', brand: 'Samsung', name: 'Galaxy Watch9（40mm 藍牙）', price: 2898, color: '#0f766e',
+    desc: 'BioActive 感應器，支援睡眠、血氧及心率等監測；機身厚 8.6mm。',
+    specs: ['40mm / 44mm', 'Snapdragon Wear Elite（3nm）', '最高 3,000 nits 屏幕', '5ATM + IP68', '雙頻 GPS'],
+    source: { name: 'Samsung 香港建議零售價（經 TechLab／csl 網店核對）', url: 'https://www.techlab.hk/p/gsmarena-galaxy-watch-ultra2-watch9' } },
+
+  /* ---------- 配件 ---------- */
+  { id: 'logitech-mx-master-4', category: 'accessory', brand: 'Logitech', name: 'Logitech MX Master 4 無線滑鼠', price: 849, oldPrice: 999, color: '#3f3f46',
+    desc: '觸覺回饋 Haptic Sense Panel，可開啟 Actions Ring 快捷操作。',
+    specs: ['Darkfield 感應器 200–8,000 DPI', 'Haptic Sense Panel', 'USB-C 充電，最長 70 日', 'Logi Bolt / 藍牙'],
+    source: { name: '香港行貨價 HK$999，零售商促銷價（2026-10-08 搜尋）', url: 'https://support.logi.com/hc/en-us/articles/28321406604439-Specification-MX-Master-4' } },
+  { id: 'apple-pencil-pro', category: 'accessory', brand: 'Apple', name: 'Apple Pencil Pro', price: 999, color: '#d4d4d8',
+    desc: '支援擠壓手勢、筒身旋轉及觸覺回饋。',
+    specs: ['擠壓手勢', '筒身旋轉', '觸覺回饋', '磁吸配對及充電'],
+    source: { name: 'Apple 香港網上商店', url: 'https://www.apple.com/hk/shop/product/MX2D3ZA/A/apple-pencil-pro' } },
+  { id: 'anker-nano-power-bank-10k', category: 'accessory', brand: 'Anker', name: 'Anker Nano 行動電源（10K, 45W）', price: 368, oldPrice: 399, color: '#2563eb',
+    desc: '內置伸縮 USB-C 線，出門毋須另帶充電線（型號 A1638）。',
+    specs: ['10,000mAh', '最高 45W 輸出', '內置伸縮 USB-C 線'],
+    source: { name: 'DMA 泛音（Anker 香港定價 HK$399）', url: 'https://www.dmag.com.hk/products/anker-nano-power-bank-10k-45w-built-in-retractable-usb-c-cable-a1638' } },
+  { id: 'anker-prime-160w', category: 'accessory', brand: 'Anker', name: 'Anker Prime 160W 充電器', price: 999, color: '#52525b',
+    desc: '三口 USB-C 氮化鎵充電器，配智能顯示屏。',
+    specs: ['160W 總輸出', '3 個 USB-C 埠', '動態電力分配', '智能顯示屏・App 遙距操控'],
+    source: { name: 'Anker 香港網店', url: 'https://anker-hk.com/products/anker-prime-charger-160w-smart-display' } }
 ];

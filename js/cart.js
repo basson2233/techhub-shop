@@ -5,6 +5,9 @@
     try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; }
   }
   let items = load(); // [{id, qty}]
+  // 移除已不存在的產品（例如舊版示範產品 p1–p16），避免購物車出現無效項目
+  const valid = items.filter(i => window.PRODUCTS && PRODUCTS.some(p => p.id === i.id) && i.qty > 0);
+  if (valid.length !== items.length) { items = valid; localStorage.setItem(KEY, JSON.stringify(items)); }
   const listeners = [];
   function save() {
     localStorage.setItem(KEY, JSON.stringify(items));

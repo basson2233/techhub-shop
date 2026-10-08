@@ -36,7 +36,8 @@
   }
 
   /* ---------- components ---------- */
-  function stars(r) { return `<span class="rating">${icon('star', 'star')} ${r.toFixed(1)}</span>`; }
+  const brandTag = p => `<span class="brand">${p.brand}</span>`;
+  const priceNote = `價格僅供參考（${window.PRICE_CHECKED || ''} 核對），以商戶最新公佈為準`;
   function card(p) {
     const off = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
     return `<article class="card">
@@ -45,7 +46,7 @@
         ${productArt(p.category, p.color)}
       </a>
       <div class="card-body">
-        <div class="card-meta"><span class="tag">${catName(p.category)}</span>${stars(p.rating)}</div>
+        <div class="card-meta"><span class="tag">${catName(p.category)}</span>${brandTag(p)}</div>
         <h3><a href="#/product/${p.id}">${p.name}</a></h3>
         <p class="muted small clamp">${p.desc}</p>
         <div class="card-foot">
@@ -59,16 +60,16 @@
   /* ---------- views ---------- */
   function viewHome() {
     const featured = PRODUCTS.filter(p => p.featured);
-    const hero = byId('p1');
+    const hero = byId('iphone-18-pro');
     return `
     <section class="hero">
       <div class="hero-text">
-        <span class="pill">新品登場 · 限時優惠</span>
+        <span class="pill">新品登場 · 參考價一覽</span>
         <h1>智能生活<br><span class="grad">由科技坊開始</span></h1>
         <p>精選手機、手提電腦、平板、耳機及智能手錶，香港本地送貨，全單滿 ${fmt(FREE_SHIP)} 免運費。</p>
         <div class="hero-cta">
           <a href="#/products" class="btn btn-lg">立即選購</a>
-          <a href="#/product/${hero.id}" class="btn btn-lg btn-ghost">了解 ${hero.name}</a>
+          <a href="#/product/${hero.id}" class="btn btn-lg btn-ghost">了解 ${hero.brand} ${hero.name.replace(/（.*）/, '')}</a>
         </div>
       </div>
       <div class="hero-art">
@@ -81,7 +82,7 @@
 
     <section class="perks">
       <div>${icon('truck')}<div><b>免運費</b><span>滿 ${fmt(FREE_SHIP)} 免費送貨</span></div></div>
-      <div>${icon('shield')}<div><b>正品保證</b><span>一年原廠保養</span></div></div>
+      <div>${icon('shield')}<div><b>參考價附來源</b><span>每件產品列明價格來源</span></div></div>
       <div>${icon('refresh')}<div><b>7 日退貨</b><span>無理由退換</span></div></div>
     </section>
 
@@ -100,7 +101,7 @@
     </section>
 
     <section class="promo">
-      <div><h2>開學優惠 🎓</h2><p>手提電腦及平板指定型號低至 9 折，再送配件禮券。</p></div>
+      <div><h2>新學年輕薄筆電 🎓</h2><p>MacBook Air（M5）、Zenbook 14 OLED、Yoga Slim 7 Ultra 一覽，比較規格及參考價。</p></div>
       <a href="#/products?cat=laptop" class="btn btn-lg btn-light">選購手提電腦</a>
     </section>`;
   }
@@ -110,10 +111,9 @@
     const q = params.get('q') || '';
     const sort = params.get('sort') || 'default';
     let list = PRODUCTS.filter(p => (cat === 'all' || p.category === cat) &&
-      (!q || (p.name + p.desc + catName(p.category)).toLowerCase().includes(q.toLowerCase())));
+      (!q || (p.brand + ' ' + p.name + p.desc + catName(p.category)).toLowerCase().includes(q.toLowerCase())));
     if (sort === 'asc') list = [...list].sort((a, b) => a.price - b.price);
     if (sort === 'desc') list = [...list].sort((a, b) => b.price - a.price);
-    if (sort === 'rating') list = [...list].sort((a, b) => b.rating - a.rating);
     const title = cat === 'all' ? '全部產品' : catName(cat);
     return `
     <div class="crumbs"><a href="#/">首頁</a> / <span>${title}</span></div>
@@ -125,7 +125,6 @@
           <option value="default" ${sort === 'default' ? 'selected' : ''}>預設排序</option>
           <option value="asc" ${sort === 'asc' ? 'selected' : ''}>價格：低至高</option>
           <option value="desc" ${sort === 'desc' ? 'selected' : ''}>價格：高至低</option>
-          <option value="rating" ${sort === 'rating' ? 'selected' : ''}>評分最高</option>
         </select>
       </div>
     </div>
@@ -148,8 +147,9 @@
       <div class="detail-info">
         <span class="tag">${catName(p.category)}</span>
         <h1>${p.name}</h1>
-        <div class="muted">${stars(p.rating)} · 有現貨</div>
+        <div class="muted">${brandTag(p)}</div>
         <div class="price big">${fmt(p.price)}${p.oldPrice ? `<s>${fmt(p.oldPrice)}</s>` : ''}</div>
+        <p class="price-note">${icon('shield')}<span>${priceNote}。來源：${p.source ? `<a href="${p.source.url}" target="_blank" rel="noopener noreferrer">${p.source.name}</a>` : '—'}</span></p>
         <p>${p.desc}</p>
         <ul class="specs">${p.specs.map(s => `<li>${icon('check')} ${s}</li>`).join('')}</ul>
         <div class="buy-row">
@@ -163,7 +163,7 @@
         </div>
         <div class="perks-mini">
           <span>${icon('truck')} 滿 ${fmt(FREE_SHIP)} 免運費</span>
-          <span>${icon('shield')} 一年保養</span>
+          <span>${icon('shield')} 保養以品牌／代理條款為準</span>
           <span>${icon('refresh')} 7 日退貨</span>
         </div>
       </div>

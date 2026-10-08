@@ -12,13 +12,21 @@ python3 -m http.server 8080
 ## 結構
 - `index.html` — 頁面骨架（header / footer），各頁面由 hash 路由動態渲染
 - `css/style.css` — 樣式（響應式：桌面 / 平板 / 手機）
-- `js/products.js` — **示例產品資料**（虛構名稱及價格，正式使用前請替換）
+- `js/products.js` — 產品資料：16 款真實在售型號，香港參考價（2026-10-08 核對），每件附價格來源
 - `js/art.js` — 離線 SVG 產品插圖及圖示（不使用外部圖片）
 - `js/cart.js` — 購物車（localStorage 儲存）
 - `js/experiment.js` — 付款方式次序實驗（隨機分配、事件記錄、結果統計）
 - `js/app.js` — 路由及各頁面：首頁、產品列表、產品詳情、購物車、結帳、訂單確認
 
-路由：`#/`、`#/products?cat=phone&q=…&sort=asc|desc|rating`、`#/product/p1`、`#/cart`、`#/checkout`、`#/success`、`#/experiment`（隱藏結果頁）
+## 產品資料
+
+- 6 個分類共 16 款真實型號（Apple、Samsung、ASUS、Lenovo、Sony、Logitech、Anker）。
+- 價格為香港參考價（港幣），於 **2026-10-08** 經網上搜尋核對官方香港網店／新聞稿或主要零售商（Fortress、Broadway、Wilson 等）；`oldPrice` 為同一來源列出的建議零售價。每件產品的 `source` 欄位記錄來源名稱及網址，產品頁會顯示。
+- 規格只收錄已核實的項目；未能確認的細節已省略。價格及供應會變動，只供參考。
+- 本站為示範／研究網站，並非任何品牌的官方或授權商店，亦與相關品牌無任何關係；產品名稱及商標屬各自擁有人所有。產品圖片為離線 SVG 示意圖，並非官方相片。
+- 舊版示範產品（`p1`–`p16`）的購物車項目會在載入時自動移除。
+
+路由：`#/`、`#/products?cat=phone&q=…&sort=asc|desc`、`#/product/p1`、`#/cart`、`#/checkout`、`#/success`、`#/experiment`（隱藏結果頁）
 
 ## 付款方式次序實驗 (Payment-order experiment)
 
@@ -63,6 +71,6 @@ python3 -m http.server 8080
 
 > ⚠️ **限制：** 本網站是純靜態網站，沒有後端，所有實驗資料只存在**每個瀏覽器自己的 localStorage**，無法彙集不同用戶的數據。要做真實實驗，需要把 `js/experiment.js` 中 `logEvent()` 的事件傳送到後端（例如免費的 Google Form / Google Sheets、Supabase 或 Firebase）。
 
-**資源版本：** `index.html` 內所有 CSS / JS 以 `?v=v4` 作快取更新標記，更改檔案後請一併更新。
+**資源版本：** `index.html` 內所有 CSS / JS 以 `?v=v5` 作快取更新標記，更改檔案後請一併更新。
 
 > 此為示範網站，結帳不會進行任何真實付款。
