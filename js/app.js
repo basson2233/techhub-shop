@@ -246,10 +246,9 @@
         </fieldset>
         <fieldset>
           <legend>3. 付款方式</legend>
-          <div class="pay-grid">
-            ${[['card', '💳 信用卡'], ['fps', '⚡ 轉數快 FPS'], ['payme', '📱 PayMe'], ['cod', '💵 貨到付款']].map((m, i) =>
-              `<label class="pay"><input type="radio" name="payment" value="${m[0]}" ${i === 0 ? 'checked' : ''}><span>${m[1]}</span></label>`).join('')}
-          </div>
+          <!-- 付款方式：次序由 js/experiment.js 隨機分配，無預設選項 -->
+          <div class="pay-list" role="radiogroup" aria-label="付款方式">${Experiment.paymentOptionsHTML()}</div>
+          <small class="err" id="payErr"></small>
           <p class="muted small">＊此為示範網站，不會收取任何款項。</p>
         </fieldset>
         <button class="btn btn-lg btn-block" type="submit">確認落單</button>
@@ -261,7 +260,6 @@
   function viewSuccess() {
     const o = JSON.parse(sessionStorage.getItem('techhub_last_order') || 'null');
     if (!o) return viewNotFound();
-    const payNames = { card: '信用卡', fps: '轉數快 FPS', payme: 'PayMe', cod: '貨到付款' };
     return `<section class="success">
       <div class="success-ic">${icon('check', 'big')}</div>
       <h1>多謝惠顧，訂單已確認！</h1>
@@ -270,7 +268,7 @@
         <div class="sum-row"><span>收件人</span><span>${esc(o.name)}（${esc(o.phone)}）</span></div>
         <div class="sum-row"><span>地址</span><span>${esc(o.region)} ${esc(o.address)}</span></div>
         <div class="sum-row"><span>送貨方式</span><span>${esc(o.delivery)}</span></div>
-        <div class="sum-row"><span>付款方式</span><span>${payNames[o.payment]}</span></div>
+        <div class="sum-row"><span>付款方式</span><span>${esc(Experiment.methodName(o.payment))}</span></div>
         <hr>
         ${o.items.map(i => `<div class="sum-item"><span>${esc(i.name)} × ${i.qty}</span><span>${fmt(i.total)}</span></div>`).join('')}
         <hr>
@@ -300,6 +298,7 @@
       case 'cart': html = viewCart(); break;
       case 'checkout': html = viewCheckout(); break;
       case 'success': html = viewSuccess(); break;
+      case 'experiment': html = Experiment.resultsHTML(); break; // 隱藏結果頁（不在導覽列）
       default: html = viewNotFound();
     }
     app.innerHTML = html;
@@ -347,10 +346,17 @@
       const c = document.getElementById('clearCart');
       if (c) c.addEventListener('click', () => { if (confirm('確定清空購物車？')) Cart.clear(); });
     }
+    if (parts[0] === 'experiment') Experiment.bindResults(route);
     if (parts[0] === 'checkout') {
       const f = document.getElementById('checkoutForm');
       if (f) {
+        Experiment.startCheckout(); // 開始計時
         f.addEventListener('submit', submitOrder);
+        f.querySelectorAll('input[name=payment]').forEach(r => r.addEventListener('change', () => {
+          Experiment.trackSelection();
+          document.getElementById('payErr').textContent = '';
+          f.querySelector('.pay-list').classList.remove('invalid');
+        }));
         // clear a field's error as soon as the user edits it
         f.addEventListener('input', e => {
           const el = e.target, err = el.parentElement && el.parentElement.querySelector('.err');
@@ -369,13 +375,21 @@
     if (d.email && !/^\S+@\S+\.\S+$/.test(d.email)) errs.email = '電郵格式不正確';
     if (!d.region) errs.region = '請選擇地區';
     if (d.address.trim().length < 5) errs.address = '請輸入詳細地址';
+    if (!d.payment) errs.payment = '請選擇付款方式';
     f.querySelectorAll('[name]').forEach(el => {
       const err = el.parentElement.querySelector('.err');
       if (!err) return;
       err.textContent = errs[el.name] || '';
       el.classList.toggle('invalid', !!errs[el.name]);
     });
-    if (Object.keys(errs).length) { f.querySelector('.invalid').focus(); return; }
+    document.getElementById('payErr').textContent = errs.payment || '';
+    f.querySelector('.pay-list').classList.toggle('invalid', !!errs.payment);
+    if (Object.keys(errs).length) {
+      const first = f.querySelector('.input.invalid') || f.querySelector('input[name=payment]');
+      first.focus();
+      return;
+    }
+    Experiment.logEvent(d.payment); // 記錄實驗事件
     const sub = Cart.subtotal(), ship = sub >= FREE_SHIP ? 0 : SHIP_FEE;
     const order = {
       no: 'TH' + Date.now().toString().slice(-8),
